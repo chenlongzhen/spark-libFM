@@ -16,7 +16,7 @@ object TestFM extends App {
     val train: RDD[String] = data.map{
       line=>
         val segs: Array[String] = line.split('\t')
-        val label = if(segs(0) == "1") "1" else "-1"
+        val label = if(segs(0).toInt >= 1) "1" else "-1"
         val features = segs.drop(1)
         // add indices 1
         val features_process: Array[String] = features.map{
