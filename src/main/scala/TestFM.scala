@@ -15,7 +15,7 @@ object TestFM extends App {
     val data = sc.textFile(path_in,minPartitions = 1000)
     val train: RDD[String] = data.map{
       line=>
-        val segs: Array[String] = line.split(' ')
+        val segs: Array[String] = line.split('\t')
         val label = if(segs(0) == "1") "1" else "-1"
         val features = segs.drop(1)
         // add indices 1
