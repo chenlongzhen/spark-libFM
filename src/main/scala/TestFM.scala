@@ -39,11 +39,11 @@ object TestFM extends App {
     train
   }
 
-  def process_data(sc:SparkContext,path_in:String,ifSplit:Double):Array[RDD[LabeledPoint]]={
+  def process_data(sc:SparkContext,path_in:String,ifSplit:Double,part:Int):Array[RDD[LabeledPoint]]={
 
     val train: RDD[String] = indiceChange(sc,path_in)
     val util = new MyUtil
-    val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = 1000).persist(StorageLevel.MEMORY_AND_DISK)
+    val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = part).persist(StorageLevel.MEMORY_AND_DISK)
     if (ifSplit > 0 && ifSplit < 1){
       val splitRdd: Array[RDD[LabeledPoint]] = data.randomSplit(Array(10*ifSplit,10*(1-ifSplit)),2017)
       return splitRdd
@@ -84,6 +84,8 @@ object TestFM extends App {
     val ifSplit = args(17).toDouble
     val ifSaveweight = args(18).toInt
 
+    val setRepartition = args(19).toInt
+
 
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -99,11 +101,11 @@ object TestFM extends App {
     logger.info("processing data")
 
     val useData: Array[RDD[LabeledPoint]] = if (test_path_in == "0") {
-      val splitdata: Array[RDD[LabeledPoint]] = process_data(sc, train_path_in, ifSplit)
+      val splitdata: Array[RDD[LabeledPoint]] = process_data(sc, train_path_in, ifSplit,setRepartition)
       splitdata
     }else{
-      val train_data = process_data(sc, train_path_in, 0)(0)
-      val test_data = process_data(sc, test_path_in, 0)(0)
+      val train_data = process_data(sc, train_path_in, 0,setRepartition)(0)
+      val test_data = process_data(sc, test_path_in, 0,setRepartition)(0)
       Array(train_data,test_data)
     }
 
