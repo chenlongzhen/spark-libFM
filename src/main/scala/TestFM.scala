@@ -15,7 +15,8 @@ object TestFM extends App {
     val data = sc.textFile(path_in,minPartitions = 1000)
     val train: RDD[String] = data.map{
       line=>
-        val segs: Array[String] = line.split(sep)
+
+        val segs: Array[String] = if (sep == '1') {line.split(' ')}else{line.split('\t')}
         val label = if(segs(0).toInt >= 1) "1" else "-1"
         val features = segs.drop(1)
         // add indices 1
@@ -40,6 +41,7 @@ object TestFM extends App {
   }
 
   def process_data(sc:SparkContext,path_in:String,ifSplit:Double,part:Int,sep:String):Array[RDD[LabeledPoint]]={
+
 
     val train: RDD[String] = indiceChange(sc,path_in,sep)
     val util = new MyUtil
@@ -85,7 +87,7 @@ object TestFM extends App {
     val ifSaveweight = args(18).toInt
 
     val setRepartition = args(19).toInt
-    val sep =args(20)
+    val sep = args(20)
 
 
     // print warn
