@@ -9,13 +9,13 @@ import org.apache.spark.storage.StorageLevel
 
 
 object TestFM extends App {
-  def indiceChange(sc: SparkContext,path_in :String): RDD[String] ={
+  def indiceChange(sc: SparkContext,path_in :String,sep:String): RDD[String] ={
     """
     """.stripMargin
     val data = sc.textFile(path_in,minPartitions = 1000)
     val train: RDD[String] = data.map{
       line=>
-        val segs: Array[String] = line.split('\t')
+        val segs: Array[String] = line.split(sep)
         val label = if(segs(0).toInt >= 1) "1" else "-1"
         val features = segs.drop(1)
         // add indices 1
@@ -39,9 +39,9 @@ object TestFM extends App {
     train
   }
 
-  def process_data(sc:SparkContext,path_in:String,ifSplit:Double,part:Int):Array[RDD[LabeledPoint]]={
+  def process_data(sc:SparkContext,path_in:String,ifSplit:Double,part:Int,sep:String):Array[RDD[LabeledPoint]]={
 
-    val train: RDD[String] = indiceChange(sc,path_in)
+    val train: RDD[String] = indiceChange(sc,path_in,sep)
     val util = new MyUtil
     val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = part).persist(StorageLevel.MEMORY_AND_DISK)
     if (ifSplit > 0 && ifSplit < 1){
@@ -85,6 +85,7 @@ object TestFM extends App {
     val ifSaveweight = args(18).toInt
 
     val setRepartition = args(19).toInt
+    val sep =args(20)
 
 
     // print warn
@@ -101,11 +102,11 @@ object TestFM extends App {
     logger.info("processing data")
 
     val useData: Array[RDD[LabeledPoint]] = if (test_path_in == "0") {
-      val splitdata: Array[RDD[LabeledPoint]] = process_data(sc, train_path_in, ifSplit,setRepartition)
+      val splitdata: Array[RDD[LabeledPoint]] = process_data(sc, train_path_in, ifSplit,setRepartition,sep)
       splitdata
     }else{
-      val train_data = process_data(sc, train_path_in, 0,setRepartition)(0)
-      val test_data = process_data(sc, test_path_in, 0,setRepartition)(0)
+      val train_data = process_data(sc, train_path_in, 0,setRepartition,sep)(0)
+      val test_data = process_data(sc, test_path_in, 0,setRepartition,sep)(0)
       Array(train_data,test_data)
     }
 
